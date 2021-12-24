@@ -133,11 +133,11 @@ for (int j = 1; j < values.length; j++)
 ```java
 import java.sql.*;
 
-public class conn {
+public class DBHelper {
     public static Connection connection;
     public static Statement statement;
 
-    public static void Conn() throws ClassNotFoundException, SQLException {
+    public static void ConnectDB() throws ClassNotFoundException, SQLException {
         Class.forName("org.sqlite.JDBC");
         connection = DriverManager.getConnection("jdbc:sqlite:ulearnJava.db");
         Statement statement = connection.createStatement();
@@ -330,3 +330,5 @@ public class ChartCreator {
 ```
 
 ![End](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/end.png)
+
+![End](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/src/Chart.jpeg)
