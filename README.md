@@ -177,7 +177,7 @@ public static void FillTransactionInfo(String queryValue) throws SQLException {
 ```
 
 Вся информация о группах переводов была добавлена в таблицу:
-![dbINfo](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/FillInfo.png)
+![dbINfo](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/FillTable.png)
 
 Похожий `запрос` для переводов:
 ```java
@@ -190,4 +190,141 @@ public static void FillTransactions(String queryValue) throws SQLException {
 ```
 
 И 18 тысяч переводов в таблице:
-![dbTable](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/FillTable.png)
+
+![dbTable](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/FillInfo.png)
+
+## SQL запросы
+
+После того как заполнили таблицы можно написать запросы к ним. Для первого задания создаем метод который будет принимать год и проходить от 1 месяца до 12 и выполнять запрос к таблице.
+
+```java
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+
+public class Tasks {
+    public static ResultSet resSet;
+    public static Statement statement;
+
+    static {
+        try {
+            statement = DBHelper.connection.createStatement();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void GetSumForYear(String year) throws ParseException, SQLException {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM");
+        Date startDate = dateFormat.parse(year + ".01"),
+                endDate = dateFormat.parse(year + ".12");
+        Calendar start = Calendar.getInstance();
+        start.setTime(startDate);
+
+        Calendar end = Calendar.getInstance();
+        end.setTime(endDate);
+        while (!start.after(end)) {
+            System.out.printf("Sum for %s ", dateFormat.format(start.getTime()));
+            getSumForMonth(dateFormat.format(start.getTime()));
+            start.add(Calendar.MONTH, 1);
+        }
+    }
+
+    public static void getSumForMonth(String month) throws SQLException {
+        //Task 1
+        String query = "SELECT SUM(Data_value) AS 'MonthSum' FROM 'TransactionsTable' WHERE Data_value!=' ' " +
+                "AND UNITS = 'Dollars' AND Period = ";
+        query += String.format("'%s'", month);
+        resSet = statement.executeQuery(query);
+        System.out.println("is " + resSet.getString("MonthSum"));
+    }
+}
+```
+
+![res](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/results.png)
+
+Создаём запрос который выведет количество переводов за месяц. Будем считать за перевод все операции в долларах даже те где скрыто значение или его просто нет.
+```java
+String countQuery = "SELECT COUNT(Data_value) AS 'Count', Period FROM 'TransactionsTable' " +
+                "WHERE UNITS = 'Dollars' GROUP BY Period";
+```
+
+![Count](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/Count.png)
+
+Для среднего перевода создадим отдельный запрос, так как тут будем считать только между переводы у которых есть числовое значение.
+
+```java
+String averageCount = "SELECT AVG(Data_value) AS 'AverageTransaction', Period FROM 'TransactionsTable' " +
+                "WHERE UNITS = 'Dollars' AND Data_value!=' ' GROUP BY Period";
+```
+
+![Average](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/Average.png)
+
+В последним задании сначала напишем SQL запрос который будет выводить все значения периода которые входят в год
+
+```java
+SELECT Period FROM 'TransactionsTable' WHERE Period BETWEEN %s.01 AND %s.12 GROUP BY Period
+```
+
+Теперь в этом промежутке ищем максимальное и минимальное значении.
+
+```java
+public static void getMaxAndMin(String year) throws SQLException {
+        //Task 3
+        String query = String.format("SELECT MAX(Data_value) AS 'Max', MIN(Data_value) AS 'Min' " +
+                "FROM 'TransactionsTable' WHERE Period IN (SELECT Period FROM 'TransactionsTable' " +
+                "WHERE Period BETWEEN %s.01 AND %s.12 GROUP BY Period) AND " +
+                "Data_value!=' ' AND UNITS = 'Dollars' ", year, year);
+        resSet = statement.executeQuery(query);
+        while (resSet.next()) {
+            System.out.println(("MaxTransaction" + " for " + year + " is " + resSet.getString("Max")));
+            System.out.println("MinTransaction" + " for " + year + " is " + resSet.getString("Min"));
+        }
+    }
+```
+
+![Result](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/MaxAndMin.png)
+
+С помощью библиотеки JFreeChart строим гистограму.
+
+```java
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartUtilities;
+import org.jfree.chart.JFreeChart;
+import org.jfree.data.category.DefaultCategoryDataset;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+public class ChartCreator {
+
+    public static DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+    public static void CreateChart() {
+        // write your code here
+
+        JFreeChart chart = ChartFactory.createBarChart(
+                "Сумма всех переводов по месяцам",
+                "Номер месяца",
+                "Сумма перевода в долларах",
+                dataset
+        );
+        try
+        {
+            Path path = Paths.get("src\\Chart.jpeg");
+            ChartUtilities.saveChartAsJPEG(new File("src\\Chart.jpeg"), chart, 1920, 1080);
+        }
+        catch (Exception e)
+        {
+            System.out.println(e);
+        }
+    }
+}
+```
+
+![End](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/end.png)
