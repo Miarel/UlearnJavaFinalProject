@@ -4,15 +4,15 @@
 
 ![CSV в Excel](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/CSV-file.png)
 
-Видно что CSV-файл состоит из 14 столбцов: Series_reference, Period, Data_value, Suppressed, STATUS, UNITS, Magnitude, Subject, Group, Series_title_1, Series_title_2, Series_title_3, Series_title_4, Series_title_5.
+Видим, что CSV-файл состоит из 14 столбцов: Series_reference, Period, Data_value, Suppressed, STATUS, UNITS, Magnitude, Subject, Group, Series_title_1, Series_title_2, Series_title_3, Series_title_4, Series_title_5.
 
-Создаём новый проект с подключенным модулем sqlite-jdbc для работы с базой данных и библиотекой JFreeChart.
+Создаём новый проект с и подключаем библиотеку JFreeChart и модуль sqlite-jdbc для работы с базой данных.
 
 ![Cfg1](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/Cfg1.png)
 
 ![Cfg2](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/Cfg2.png)
 
-Изначально у нас таблица в 1 НФ, чтобы привести её к 2 НФ добавим счетчик, который будет первичным ключом в нашей новой таблице. Так как по заданию нужно привести таблицы к 3-ей нормальной форме, разделем таблицу на две. Первая будет соержать в себе идентификатор, референс, дата, перевод (число + единицы измерения) и статус. Во второй таблице будет содержаться информация о деталях перевода: референс(первичный ключ), magnitude, субъект, группа и все заголовки. В качестве внешнего ключа у нас будет столбец "Series_reference".
+Изначально у нас таблица в 1 НФ, чтобы привести её к 2 НФ добавим счетчик, который будет первичным ключом в нашей новой таблице. Так как по заданию нужно привести таблицы к 3-ей нормальной форме, разделим таблицу на две. Первая будет содержать в себе идентификатор, референс, дата, перевод (число единицы измерения) и статус. Во второй таблице будет содержаться информация о деталях перевода: референс (первичный ключ), magnitude, субъект, группа и все заголовки. В качестве внешнего ключа у нас будет столбец "Series_reference".
 
 Перед тем как создавать таблицы в базе данных добавим в проект класс `Transactions` со всеми переводами.
 
@@ -74,6 +74,7 @@ public class TransactionInfo {
 
 ## CSVParser
 Напишем `парсер` для CSV-файла:
+
 ```java
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -92,15 +93,16 @@ public CSVParser(String path) {
     }
 }
 ```
-Чтобы сложить значения из CSV-файла в базу данных, будем брать по отдельности каждую строку и разбивать её по запятой, но перед этим посмотрим что мы получили.
+
+Чтобы сложить значения из CSV-файла в базу данных, будем брать по отдельности каждую строку и разбивать её по запятой, но перед этим посмотрим, что мы получили.
 
 ![Parser](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/Parser.png)
 
-Смотрим на строки и видим, что у некотрых столбцов отсутсвуют значения и идут по 2-3 запятые подряд. То есть если сплитануть строку прямо сейчас у нас получатся массивы разной длины и их будет труднее складывать в классы, поэтому перед этим заменим все "," на ", ".
+Смотрим на строки и видим, что у некоторых столбцов отсутствуют значения и идут по 2-3 запятые подряд. То есть если сплитануть строку прямо сейчас у нас получатся массивы разной длины и их будет труднее складывать в классы, поэтому перед этим заменим все "," на ", ".
 
 ![updParser](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/updParser.png)
 
-Стало чуть лучше, но у некотрых полей класса принимаемый тип значений - int и значение " 6" просто так числом не станет. Чтобы удалить незначащий пробел перед значениями столбцов пройдемся в цикле от 1 до длины массива и удалим пробел если значение не равно пробелу.
+Стало чуть лучше, но у некоторых полей класса принимаемый тип значений - int и значение " 6" просто так числом не станет. Чтобы удалить незначащий пробел перед значениями столбцов, пройдемся в цикле от 1 до длины массива и удалим пробел если значение не равно пробелу.
 
 ```java
 for (int j = 1; j < values.length; j++) 
@@ -114,8 +116,7 @@ for (int j = 1; j < values.length; j++)
 
 ![Correct values](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/CorrectValues.png)
 
-Теперь у нас нет лишних пробелов и все массивы одной длины, значит можно складывать данные в ArrayList.
-После того как положили все строки в лист посмотрим на них.В CSV-файле 18184 строк, то есть 18183 строк с значениями и 1 с названиями столбцов, а у нас как раз 18183 значения.
+Теперь у нас нет лишних пробелов и все массивы одной длины, значит можно складывать данные в ArrayList. В CSV-файле 18184 строк, то есть 18183 строк со значениями и 1 с названиями столбцов, а у нас как раз 18183 значения.
 
 ![Transactions](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/Transactions.png)
 
@@ -195,7 +196,7 @@ public static void FillTransactions(String queryValue) throws SQLException {
 
 ## SQL запросы
 
-После того как заполнили таблицы можно написать запросы к ним. Для первого задания создаем метод который будет принимать год и проходить от 1 месяца до 12 и выполнять запрос к таблице.
+После того как заполнили таблицы можно написать запросы к ним. Для первого задания создаем `метод` который будет принимать год и проходить от 1 месяца до 12 и выполнять запрос к таблице.
 
 ```java
 import java.sql.ResultSet;
@@ -247,7 +248,8 @@ public class Tasks {
 
 ![res](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/results.png)
 
-Создаём запрос который выведет количество переводов за месяц. Будем считать за перевод все операции в долларах даже те где скрыто значение или его просто нет.
+Создаём `запрос`, который выведет количество переводов за месяц. Будем считать за перевод все операции в долларах даже те, где скрыто значение или где его просто нет.
+
 ```java
 String countQuery = "SELECT COUNT(Data_value) AS 'Count', Period FROM 'TransactionsTable' " +
                 "WHERE UNITS = 'Dollars' GROUP BY Period";
@@ -255,7 +257,7 @@ String countQuery = "SELECT COUNT(Data_value) AS 'Count', Period FROM 'Transacti
 
 ![Count](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/Count.png)
 
-Для среднего перевода создадим отдельный запрос, так как тут будем считать только между переводы у которых есть числовое значение.
+Для среднего перевода создадим отдельный `запрос`, так как тут будем считать только между переводов, у которых есть числовое значение.
 
 ```java
 String averageCount = "SELECT AVG(Data_value) AS 'AverageTransaction', Period FROM 'TransactionsTable' " +
@@ -264,13 +266,13 @@ String averageCount = "SELECT AVG(Data_value) AS 'AverageTransaction', Period FR
 
 ![Average](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/Average.png)
 
-В последним задании сначала напишем SQL запрос который будет выводить все значения периода которые входят в год
+В последнем задании сначала напишем SQL `запрос` который будет выводить месяца с 1 по 12.
 
 ```java
 SELECT Period FROM 'TransactionsTable' WHERE Period BETWEEN %s.01 AND %s.12 GROUP BY Period
 ```
 
-Теперь в этом промежутке ищем максимальное и минимальное значении.
+Теперь в этом промежутке ищем максимальное и минимальное значения.
 
 ```java
 public static void getMaxAndMin(String year) throws SQLException {
@@ -289,7 +291,7 @@ public static void getMaxAndMin(String year) throws SQLException {
 
 ![Result](https://github.com/Miarel/UlearnJavaFinalProject/blob/main/Screenshots/MaxAndMin.png)
 
-С помощью библиотеки JFreeChart строим гистограму.
+С помощью библиотеки JFreeChart строим гистограмму.
 
 ```java
 import org.jfree.chart.ChartFactory;
